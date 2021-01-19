@@ -66,12 +66,12 @@ class Table{
         }
 
         void adicionar(int lin, int col, string novo){
-            table[col][lin] = novo;
+            table[col][lin].append(novo+" ");
 
             return;
         }
 
-        void get_table(int lin, int col){
+        void print_table(int lin, int col){
             int i, j;
             for(i=0; i<lin; i++){
                 for(j=0; j<col; j++){
@@ -81,6 +81,11 @@ class Table{
             }
 
             return;
+        }
+
+        void print_line(int lin){
+            for(int i=0; i<table.size(); i++)
+                cout << table[lin][i] << "\t| ";
         }
 
         string get_cel(int lin, int col){
@@ -97,7 +102,7 @@ int main(){
     string simbolont;                       // Simbolo Não-Terminal
     string simbolopar;                      // Simbolo Par da Produção
     string txtline;                         // Linha do .txt
-    vector <string> terminais;                // Vetor de Terminais
+    vector <string> terminais;              // Vetor de Terminais
     vector <string> nterminais;             // Vetor de Não-Terminais
     vector <Producoes> prod;                // Relação de T/NT
     Producoes par;                          // Item de Vetor <prod>
@@ -141,6 +146,8 @@ int main(){
                 simbolot = "eps";
                 par.adicionar(simboloe, simbolot, " ", 1);
                 prod.push_back(par);
+
+                cout << "*" << simboloe << " " << simbolot << " " << simbolont << endl;
             }
 
             // Adicona ' aos novos NTs case passe de Z
@@ -190,14 +197,14 @@ int main(){
     const int nt_size = nterminais.size();
 
     Table table(nt_size, t_size);
-                                        // NÃO FUNCIONA AINDA
+
 // Popular Tabela AFND
     for(it_p=prod.begin(); it_p < prod.end(); it_p++){
         for(i=0; i < nt_size; i++){
             if((*it_p).get_estado() == nterminais[i]){
                 for(j=0; j<t_size; j++){
                     if((*it_p).get_prod() == terminais[j]){
-                        table.adicionar(j, i, (*it_p).get_nterminal());
+                        table.adicionar(i, j, (*it_p).get_nterminal());
                     }
                 }
             }
@@ -205,8 +212,18 @@ int main(){
     }
 
 // Tabela AFND
+    cout << endl;
     cout << "Tabela AFND\n";
-    table.get_table(nt_size, t_size);
+    cout << "\t| ";
+    for(i=0; i<t_size; i++)
+        cout << terminais[i] << "\t| ";
+    cout << endl;
+    for(i=0; i<nt_size; i++){
+        cout << nterminais[i] << "\t| ";
+        for(j=0; j<t_size; j++)
+            cout << table.get_cel(j, i) << "\t| ";
+        cout << endl;
+    }
 
     return 0;
 }
