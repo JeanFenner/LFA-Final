@@ -13,10 +13,6 @@ Construção de uma aplicação para construção, determinização e minimizaç
 #include <string>
 #include <vector>
 
-//vector.at()
-
-//cout << "\n-- Ɛ --\n";
-
 using namespace std;
 
 class Producoes{
@@ -83,14 +79,38 @@ class Table{
             return;
         }
 
-        void print_line(int lin){
-            for(int i=0; i<table.size(); i++)
-                cout << table[lin][i] << "\t| ";
-        }
-
         string get_cel(int lin, int col){
             return table[lin][col];
         }
+};
+
+class Gra_Tab{
+    string gramatica;
+    string tabela;
+
+    public:
+        void adicionar(string g, string t){
+            gramatica = g;
+            tabela = t;
+
+            return;
+        }
+
+        bool compara(string g){
+            if(gramatica == g)
+                return true;
+
+            return false;
+        }
+
+        string get_g(){
+            return gramatica;
+        }
+
+        string get_t(){
+            return tabela;
+        }
+
 };
 
 int main(){
@@ -102,11 +122,15 @@ int main(){
     string simbolont;                       // Simbolo Não-Terminal
     string simbolopar;                      // Simbolo Par da Produção
     string txtline;                         // Linha do .txt
+    vector <int> nterminais_ef;             // Vetor de Não-Terminais com Estado Final
     vector <string> terminais;              // Vetor de Terminais
     vector <string> nterminais;             // Vetor de Não-Terminais
+    vector <Gra_Tab> gra_tab;               // Relação NT Gramática-Tabela
     vector <Producoes> prod;                // Relação de T/NT
-    Producoes par;                          // Item de Vetor <prod>
+    Producoes par;                          // Item do Vetor <prod>
+    Gra_Tab dupla;                          // Item do vetor <gra_tab>
     vector <Producoes>::iterator it_p;      // Iterador do Vetor <prod>
+    vector <Gra_Tab>::iterator it_gt;       // Iterador do Vetor <gra_tab>
 
     ifstream txtfiles("text.txt");
     
@@ -114,12 +138,113 @@ int main(){
 
         nterminais.push_back("S");
         ntchar[0] = 'A';
+        dupla.adicionar("S", "S");
+        gra_tab.push_back(dupla);
 
         while(getline(txtfiles, txtline)){
             cout << txtline << "\n";
 
             if(txtline[0] == '<'){              // GRAMATICAS
+                int ef = 0;
+                char txtchar;
+                string estado;
+                string auxchar;
+                j = 1;
 
+                cout << endl;
+                for(i=0; i<gra_tab.size(); i++){
+                    cout << gra_tab[i].get_g() << "_" << gra_tab[i].get_t() << " ";
+                }
+                cout << endl;
+
+                while(txtline[j] != '>'){
+                    estado.push_back(txtline[j]);
+                    j++;
+                }
+                cout << "G\nestado: " << estado << "\t";
+
+                for(it_gt=gra_tab.begin(); it_gt<gra_tab.end(); it_gt++){
+                    if((*it_gt).compara(estado)){
+                        estado = (*it_gt).get_t();
+                        it_gt = gra_tab.end();
+                    } else if((it_gt+1) == gra_tab.end()){
+                        auxchar = (*ntchar);
+                        dupla.adicionar(estado, auxchar);
+                        gra_tab.push_back(dupla);
+                        estado = auxchar;
+                        nterminais.push_back(estado);
+                        ntchar[0]++;
+                    }
+                }
+                simboloe = estado;
+                estado = "NUL";
+                cout << "simboloe: " << simboloe << endl;
+
+                while (txtline[j] != '='){
+                    j++;
+                }
+
+                for(i=j+1; i<txtline.length(); i++){
+                    txtchar = txtline[i];
+                    cout << txtchar << "[";
+                    if(txtchar>32 && txtchar<127){
+                        if(txtchar == '|'){
+                            par.adicionar(simboloe, simbolot, simbolont);
+                            prod.push_back(par);
+                            cout << "+";
+                            if(ef){
+                                par.adicionar(simbolont, "eps", "NUL", ef);
+                                prod.push_back(par);
+                                nterminais.push_back(simbolont);
+                                ntchar[0]++;
+                                ef = 0;
+                                cout << "*" << simbolont;
+                            }
+                        }else if(txtchar=='<'){
+                            i++;
+                            while(txtline[i] != '>'){
+                                auxchar = txtline[i];
+                                i++;
+                            }
+
+                            for(it_gt=gra_tab.begin(); it_gt<gra_tab.end(); it_gt++){
+                                if((*it_gt).compara(auxchar)){
+                                    simbolont = (*it_gt).get_t();
+                                    it_gt = gra_tab.end();
+                                } else if((it_gt+1) == gra_tab.end()){
+                                    simbolont = (*ntchar);
+                                    dupla.adicionar(auxchar, simbolont);
+                                    gra_tab.push_back(dupla);
+                                    nterminais.push_back(simbolont);
+                                    ntchar[0]++;
+                                }
+                            }
+                            cout << auxchar << " " << simbolont << " ";
+                        }else {
+                            simbolot = txtchar;
+                            ascii[txtchar] = 1;
+                            cout << txtchar << " ";
+                            if(txtline[i+1]!='<'){
+                                simbolont = *ntchar;
+                                ntchar[0]++;
+                                ef = 1;
+                            }
+                        }
+                    }
+                    cout << "] ";
+                }
+                par.adicionar(simboloe, simbolot, simbolont);
+                prod.push_back(par);
+                cout << "+";
+                if(ef){
+                    par.adicionar(simbolont, "eps", "NUL", ef);
+                    prod.push_back(par);
+                    nterminais.push_back(simbolont);
+                    ntchar[0]++;
+                    ef = 0;
+                    cout << "*" << simbolont;
+                }
+                cout << endl;
             } else{                             // TOKENS
 
                 simboloe = *nterminais.begin();
@@ -132,8 +257,7 @@ int main(){
                     par.adicionar(simboloe, simbolot, simbolont);
                     prod.push_back(par);
 
-                    cout << simboloe << " " << simbolot << " " << simbolont << endl;
-                    
+                    cout << simboloe << " " << simbolot << " " << simbolont << endl;                    
 
                     ntchar[0]++;
                     simboloe = simbolont;
@@ -144,7 +268,7 @@ int main(){
                         ntchar[0]++;
                 }
                 simbolot = "eps";
-                par.adicionar(simboloe, simbolot, " ", 1);
+                par.adicionar(simboloe, simbolot, "NUL", 1);
                 prod.push_back(par);
 
                 cout << "*" << simboloe << " " << simbolot << " " << simbolont << endl;
