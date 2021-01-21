@@ -12,7 +12,8 @@ Construção de uma aplicação para construção, determinização e minimizaç
 #include <fstream>
 #include <string>
 #include <vector>
-#define ARQUIVO "text.txt"              // Arquivo que será lido
+#define ARQUIVO_R "text.txt"            // Arquivo que será lido
+#define ARQUIVO_W "afd.txt"             // Arquivo em que será escrito
 #define EPS "&"                         // Epsilon
 
 using namespace std;
@@ -142,7 +143,7 @@ int main(){
     Gra_Tab dupla;                          // Item do vetor <gra_tab>
     vector <Producoes>::iterator it_p;      // Iterador do Vetor <prod>
     vector <Gra_Tab>::iterator it_gt;       // Iterador do Vetor <gra_tab>
-    ifstream txtfiles(ARQUIVO);
+    ifstream txtfiles(ARQUIVO_R);
 
 
 /*
