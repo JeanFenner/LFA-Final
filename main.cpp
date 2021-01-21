@@ -20,14 +20,14 @@ using namespace std;
 
 class Producoes{
     string estado;                      // Estado atual
-    string p;                           // Produção/terminal
+    string t;                           // Terminal
     string nt;                          // Não-Terminal
     int estado_final;                   // Estado Final?
 
     public:
-        void adicionar(string new_e, string new_p, string new_nt, int new_ef = 0){
+        void adicionar(string new_e, string new_t, string new_nt, int new_ef = 0){
             estado = new_e;
-            p = new_p;
+            t = new_t;
             nt = new_nt;
             estado_final = new_ef;
 
@@ -37,8 +37,8 @@ class Producoes{
         string get_estado(){
             return estado;
         }
-        string get_prod(){
-            return p;
+        string get_terminal(){
+            return t;
         };
         string get_nterminal(){
             return nt;
@@ -127,23 +127,23 @@ class Gra_Tab{
 
 int main(){
     int i, j;
-    int ntchar[2];                          // Character do Não Terminal
+    int ntchar[2];                          // Caracter do Não Terminal
     int ascii[127] = {0};                   // Lista de uso ASCII
-    string simboloe;                        // Simbolo Estado
-    string simbolot;                        // Simbolo Terminal
-    string simbolont;                       // Simbolo Não-Terminal
-    string simbolopar;                      // Simbolo Par da Produção
+    string simboloe;                        // Símbolo Estado
+    string simbolot;                        // Símbolo Terminal
+    string simbolont;                       // Símbolo Não-Terminal
+    string simbolopar;                      // Símbolo Par da Produção
     string txtline;                         // Linha do .txt
-    vector <int> nterminais_ef;             // Vetor de Não-Terminais com Estado Final
     vector <string> terminais;              // Vetor de Terminais
     vector <string> nterminais;             // Vetor de Não-Terminais
     vector <Gra_Tab> gra_tab;               // Relação NT Gramática-Tabela
-    vector <Producoes> prod;                // Relação de T/NT
+    vector <Producoes> prod;                // Vetor das produções de cada Estado
     Producoes par;                          // Item do Vetor <prod>
     Gra_Tab dupla;                          // Item do vetor <gra_tab>
     vector <Producoes>::iterator it_p;      // Iterador do Vetor <prod>
     vector <Gra_Tab>::iterator it_gt;       // Iterador do Vetor <gra_tab>
-    ifstream txtfiles(ARQUIVO_R);
+    ifstream txtfiles(ARQUIVO_R);           // Abrir arquivo .txt
+
 
 
 /*
@@ -160,7 +160,6 @@ int main(){
         gra_tab.push_back(dupla);
 
         while(getline(txtfiles, txtline)){
-            cout << txtline << "\n";
 
             if(txtline[0] == '<'){              // GRAMATICAS
                 int ef = 0;
@@ -320,7 +319,7 @@ int main(){
     }
     cout << endl;
     for(it_p=prod.begin(); it_p<prod.end(); it_p++){
-        cout << (*it_p).get_prod() << "\t";
+        cout << (*it_p).get_terminal() << "\t";
     }
     cout << endl;
     for(it_p=prod.begin(); it_p<prod.end(); it_p++){
@@ -348,16 +347,16 @@ int main(){
     for(it_p=prod.begin(); it_p<prod.end(); it_p++){
         int ef_aux = (*it_p).get_ef();
         string e_aux = (*it_p).get_estado();
-        string p_aux = (*it_p).get_prod();
+        string t_aux = (*it_p).get_terminal();
         string nt_aux = (*it_p).get_nterminal();
 
         for(i=0; i<nt_size; i++){
             if(e_aux == nterminais[i]){
                 for(j=0; j<t_size; j++){
-                    if(p_aux == terminais[j]){
-                        cout << e_aux << " " << p_aux << " " << ef_aux << " " << nt_aux << endl;
+                    if(t_aux == terminais[j]){
+                        cout << e_aux << " " << t_aux << " " << ef_aux << " " << nt_aux << endl;
                         afnd.adicionar(i, j, ef_aux, nt_aux);
-                    }else if(p_aux == "&"){
+                    }else if(t_aux == "&"){
                         afnd.adicionar(i, j, ef_aux);
                     }
                 }
