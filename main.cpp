@@ -12,9 +12,9 @@ Construção de uma aplicação para construção, determinização e minimizaç
 #include <fstream>
 #include <string>
 #include <vector>
-#define ARQUIVO_R "text.txt"            // Arquivo que será lido
-#define ARQUIVO_W "afd.txt"             // Arquivo em que será escrito
-#define EPS "&"                         // Epsilon
+#define ARQUIVO_R "text.txt"                // Arquivo que será lido
+#define ARQUIVO_W "afd.txt"                 // Arquivo em que será escrito
+#define EPS "&"                             // Epsilon
 
 using namespace std;
 
@@ -49,10 +49,10 @@ class Producoes{
 };
 
 class AF{
-    vector <vector<string>> table;
-    vector <int> estado_final;
-    int size_lin;
-    int size_col;
+    vector <vector<string>> table;          // Tabela de transições
+    vector <int> estado_final;              // Vetor com identificador de estados finais
+    int size_lin;                           // Número de linhas da tabela
+    int size_col;                           // Número de colunas da tabela
 
     public:
         AF(int lin, int col){
@@ -61,7 +61,7 @@ class AF{
             for(i=0; i<col; i++){
                 vector <string> nt;
                 for(j=0; j<lin; j++)
-                    nt.push_back(0);
+                    nt.push_back(" ");
                 table.push_back(nt);
             }
             for(i=0; i<lin; i++)
@@ -70,7 +70,7 @@ class AF{
             size_col = col;
         }
 
-        void adicionar(int lin, int col, int ef, string novo = " "){
+        void adicionar(int lin, int col, int ef, string novo){
             table[col][lin].append(novo+" ");
             if(ef)
                 estado_final[lin] = 1;
@@ -97,8 +97,8 @@ class AF{
 };
 
 class Gra_Tab{
-    string gramatica;
-    string tabela;
+    string gramatica;                   // Símbolo do estado na Gramática
+    string tabela;                      // Símbolo do estado no AF
 
     public:
         void adicionar(string g, string t){
@@ -127,24 +127,20 @@ class Gra_Tab{
 
 int main(){
     int i, j;
-    int ntchar[2];                          // Caracter do Não Terminal
-    int ascii[127] = {0};                   // Lista de uso ASCII
-    string simboloe;                        // Símbolo Estado
-    string simbolot;                        // Símbolo Terminal
-    string simbolont;                       // Símbolo Não-Terminal
-    string simbolopar;                      // Símbolo Par da Produção
-    string txtline;                         // Linha do .txt
-    vector <string> terminais;              // Vetor de Terminais
-    vector <string> nterminais;             // Vetor de Não-Terminais
-    vector <Gra_Tab> gra_tab;               // Relação NT Gramática-Tabela
-    vector <Producoes> prod;                // Vetor das produções de cada Estado
-    Producoes par;                          // Item do Vetor <prod>
-    Gra_Tab dupla;                          // Item do vetor <gra_tab>
-    vector <Producoes>::iterator it_p;      // Iterador do Vetor <prod>
-    vector <Gra_Tab>::iterator it_gt;       // Iterador do Vetor <gra_tab>
-    ifstream txtfiles(ARQUIVO_R);           // Abrir arquivo .txt
-
-
+    int ntchar[2];                              // Caracter do Não Terminal
+    int ascii[127] = {0};                       // Lista de uso ASCII
+    string simboloe;                            // Símbolo Estado
+    string simbolot;                            // Símbolo Terminal
+    string simbolont;                           // Símbolo Não-Terminal
+    string txtline;                             // Linha do .txt
+    vector <string> terminais;                  // Vetor de Terminais
+    vector <string> nterminais;                 // Vetor de Não-Terminais
+    vector <Gra_Tab> gra_tab;                   // Relação NT Gramática-Tabela
+    vector <Producoes> prod;                    // Vetor das produções de cada Estado
+    Producoes novo_prod;                        // Item do Vetor <prod>
+    Gra_Tab dupla;                              // Item do vetor <gra_tab>
+    vector <Gra_Tab>::iterator it_gt;           // Iterador do Vetor <gra_tab>
+    ifstream txtfiles(ARQUIVO_R);               // Abrir arquivo .txt
 
 /*
     ####
@@ -226,22 +222,22 @@ int main(){
                         }
                         if(ef){
                             if(simbolot == EPS){
-                                par.adicionar(simboloe, simbolot, "NUL", 1);
-                                prod.push_back(par);
+                                novo_prod.adicionar(simboloe, simbolot, "NUL", 1);
+                                prod.push_back(novo_prod);
                             }else{
                                 simbolont = (*ntchar);
                                 nterminais.push_back(simbolont);
                                 ntchar[0]++;
 
-                                par.adicionar(simboloe, simbolot, simbolont);
-                                prod.push_back(par);
-                                par.adicionar(simbolont, EPS, "NUL", 1);
-                                prod.push_back(par);
+                                novo_prod.adicionar(simboloe, simbolot, simbolont);
+                                prod.push_back(novo_prod);
+                                novo_prod.adicionar(simbolont, EPS, "NUL", 1);
+                                prod.push_back(novo_prod);
                             }
                             ef = 0;
                         }else{
-                            par.adicionar(simboloe, simbolot, simbolont);
-                            prod.push_back(par);
+                            novo_prod.adicionar(simboloe, simbolot, simbolont);
+                            prod.push_back(novo_prod);
                         }
                         
                         // Adicona ' aos novos NTs case passe de Z
@@ -262,8 +258,8 @@ int main(){
                     simbolot = txtline[i];
                     simbolont = *ntchar;
                     ascii[txtline[i]] = 1;
-                    par.adicionar(simboloe, simbolot, simbolont);
-                    prod.push_back(par);
+                    novo_prod.adicionar(simboloe, simbolot, simbolont);
+                    prod.push_back(novo_prod);
                     ntchar[0]++;
                     simboloe = simbolont;
                     nterminais.push_back(simbolont);
@@ -273,8 +269,8 @@ int main(){
                         ntchar[0]++;
                 }
                 simbolot = EPS;
-                par.adicionar(simboloe, simbolot, "NUL", 1);
-                prod.push_back(par);
+                novo_prod.adicionar(simboloe, simbolot, "NUL", 1);
+                prod.push_back(novo_prod);
                 
                 // Adicona ' aos novos NTs case passe de Z
                 if(ntchar[0]>90){
@@ -286,64 +282,35 @@ int main(){
             cout << endl;
         }
         txtfiles.close();
+        
+        // Preenchendo vetor de terminais com os caracteres da ascii utilizados
+        for(i=0; i<127; i++){
+            if(ascii[i]!=0){
+                char ctemp = i;
+                string stemp;
+                stemp.push_back(ctemp);
+                terminais.push_back(stemp);
+            }
+        }
     } else{
         cout << "Impossivel abrir arquivo\n";
         
         return 0;
     }
 
-// Preenchendo vetor de terminais com os caracteres da ascii utilizados
-    for(i=0; i<127; i++){
-        if(ascii[i]!=0){
-            char ctemp = i;
-            string stemp;
-            stemp.push_back(ctemp);
-            terminais.push_back(stemp);
-        }
-    }
-
-// Prints de Verificação
-    for(i=0; i<terminais.size(); i++)
-        cout << terminais[i] << " ";
-    cout << endl;
-    for(i=0; i<nterminais.size(); i++)
-        cout << nterminais[i] << " ";
-    cout << endl;
-
-    cout << "Producoes\n";
-    for(it_p=prod.begin(); it_p<prod.end(); it_p++){
-        if((*it_p).get_ef())
-            cout << "*" << (*it_p).get_estado() << "\t";
-        else
-            cout << (*it_p).get_estado() << "\t";
-    }
-    cout << endl;
-    for(it_p=prod.begin(); it_p<prod.end(); it_p++){
-        cout << (*it_p).get_terminal() << "\t";
-    }
-    cout << endl;
-    for(it_p=prod.begin(); it_p<prod.end(); it_p++){
-        cout << (*it_p).get_nterminal() << "\t";
-    }
-    cout << endl;
-    for(it_p=prod.begin(); it_p<prod.end(); it_p++){
-        cout << (*it_p).get_ef() << "\t";
-    }
-    cout << endl;
-
-    const int t_size = terminais.size();
-    const int nt_size = nterminais.size();
-
 /*  ####
-        Criação do Autômato Finito
+        Construção do Autômato Finito
     ####
 */
-    cout << "Criando AFND\n";
+
+    const int t_size = terminais.size();        // Tamanho do Vetor <terminais>
+    const int nt_size = nterminais.size();      // Tamanho do Vetor <nterminais>
+    vector <Producoes>::iterator it_p;          // Iterador do Vetor <prod>
+
+// Inicialização do AF    
     AF afnd(nt_size, t_size);
 
-    cout << "AFND criada\nPreenchendo tabela\n";
-
-// Preencher Tabela AFND
+// Preencher transições do AF
     for(it_p=prod.begin(); it_p<prod.end(); it_p++){
         int ef_aux = (*it_p).get_ef();
         string e_aux = (*it_p).get_estado();
@@ -357,7 +324,7 @@ int main(){
                         cout << e_aux << " " << t_aux << " " << ef_aux << " " << nt_aux << endl;
                         afnd.adicionar(i, j, ef_aux, nt_aux);
                     }else if(t_aux == "&"){
-                        afnd.adicionar(i, j, ef_aux);
+                        afnd.adicionar(i, j, ef_aux, " ");
                     }
                 }
             }
@@ -365,7 +332,7 @@ int main(){
     }
     cout << "AFND preenchida" << endl;
 
-// Tabela AFND
+// AFND
     cout << endl;
     cout << "Tabela AFND\n";
     cout << "NT / T\t| ";

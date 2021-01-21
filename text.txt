@@ -1,5 +1,5 @@
-1001
-123
-<S> ::= a<A> | e<B>
-<A> ::= b | c<A>
-<B> ::= d | &
+se
+entao
+senao
+<S> ::= a<A> | e<A> | i<A> | o<A> | u<A>
+<A> ::= a<A> | e<A> | i<A> | o<A> | u<A> | &
