@@ -47,23 +47,26 @@ class Producoes{
         }
 };
 
-class Table{
+class AF{
     vector <vector<string>> table;
     vector <int> estado_final;
+    int size_lin;
+    int size_col;
 
     public:
-        Table(int lin, int col){
+        AF(int lin, int col){
             int i, j;
 
             for(i=0; i<col; i++){
                 vector <string> nt;
                 for(j=0; j<lin; j++)
-                    nt.push_back(" ");
+                    nt.push_back(0);
                 table.push_back(nt);
             }
             for(i=0; i<lin; i++)
                 estado_final.push_back(0);
-
+            size_lin = lin;
+            size_col = col;
         }
 
         void adicionar(int lin, int col, int ef, string novo = " "){
@@ -74,9 +77,9 @@ class Table{
             return;
         }
 
-        void print_table(int lin, int col){
-            for(int i=0; i<lin; i++){
-                for(int j=0; j<col; j++){
+        void print_af(){
+            for(int i=0; i<size_lin; i++){
+                for(int j=0; j<size_col; j++){
                     cout << table[j][i] << " ";
                 }
                 cout << endl;
@@ -124,7 +127,7 @@ class Gra_Tab{
 int main(){
     int i, j;
     int ntchar[2];                          // Character do Não Terminal
-    int ascii[129] = {0};                   // Lista de uso ASCII
+    int ascii[127] = {0};                   // Lista de uso ASCII
     string simboloe;                        // Simbolo Estado
     string simbolot;                        // Simbolo Terminal
     string simbolont;                       // Simbolo Não-Terminal
@@ -139,8 +142,14 @@ int main(){
     Gra_Tab dupla;                          // Item do vetor <gra_tab>
     vector <Producoes>::iterator it_p;      // Iterador do Vetor <prod>
     vector <Gra_Tab>::iterator it_gt;       // Iterador do Vetor <gra_tab>
-
     ifstream txtfiles(ARQUIVO);
+
+
+/*
+    ####
+        Leitura do Arquivo de Texto
+    ####
+*/
 
     if(txtfiles.is_open()){
 
@@ -325,8 +334,12 @@ int main(){
     const int t_size = terminais.size();
     const int nt_size = nterminais.size();
 
+/*  ####
+        Criação do Autômato Finito
+    ####
+*/
     cout << "Criando AFND\n";
-    Table table(nt_size, t_size);
+    AF afnd(nt_size, t_size);
 
     cout << "AFND criada\nPreenchendo tabela\n";
 
@@ -342,9 +355,9 @@ int main(){
                 for(j=0; j<t_size; j++){
                     if(p_aux == terminais[j]){
                         cout << e_aux << " " << p_aux << " " << ef_aux << " " << nt_aux << endl;
-                        table.adicionar(i, j, ef_aux, nt_aux);
+                        afnd.adicionar(i, j, ef_aux, nt_aux);
                     }else if(p_aux == "&"){
-                        table.adicionar(i, j, ef_aux);
+                        afnd.adicionar(i, j, ef_aux);
                     }
                 }
             }
@@ -360,9 +373,9 @@ int main(){
         cout << terminais[i] << "\t| ";
     cout << endl;
     for(i=0; i<nt_size; i++){
-        cout << ((table.get_ef(i)) ? "*" : " ") << nterminais[i] << "\t| ";
+        cout << ((afnd.get_ef(i)) ? "*" : " ") << nterminais[i] << "\t| ";
         for(j=0; j<t_size; j++)
-            cout << table.get_cel(i, j) << "\t| ";
+            cout << afnd.get_cel(i, j) << "\t| ";
         cout << endl;
     }
 
