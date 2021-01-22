@@ -18,13 +18,16 @@ Construção de uma aplicação para construção, determinização e minimizaç
 
 using namespace std;
 
-class Producoes{
+//Classe para controlar as produções
+
+class Producoes {
     string estado;                      // Estado atual
     string t;                           // Terminal
     string nt;                          // Não-Terminal
     int estado_final;                   // Estado Final?
 
     public:
+        //metodo adicionar que não possui um retorno de informação servindo apenas para setar o estado, terminar, não terminal e estado final
         void adicionar(string new_e, string new_t, string new_nt, int new_ef = 0){
             estado = new_e;
             t = new_t;
@@ -34,6 +37,7 @@ class Producoes{
             return;
         };
 
+        // get para recuperar as informações setadas no metodo adicionar
         string get_estado(){
             return estado;
         }
@@ -147,48 +151,50 @@ int main(){
         Leitura do Arquivo de Texto
     ####
 */
-
+    //verifica se existe o arquivo com a relação de tokens e/ou gramaticas regulares
     if(txtfiles.is_open()){
-
-        nterminais.push_back("S");
-        ntchar[0] = 'A';
+        // inicializa as variaveis 
+        nterminais.push_back("S"); 
+        ntchar[0] = 'A'; 
         dupla.adicionar("S", "S");
         gra_tab.push_back(dupla);
-
-        while(getline(txtfiles, txtline)){
-
+        
+        while(getline(txtfiles, txtline)){ // loop para ler cada linha do arquivo
+            // caso o mesmo iniciar com o char '<' é identiciado como uma gramatica
             if(txtline[0] == '<'){              // GRAMATICAS
                 int ef = 0;
                 char txtchar;
                 string estado;
                 string auxchar;
                 j = 1;
-
-                while(txtline[j] != '>'){
+                
+                while(txtline[j] != '>'){ // loop para guardar na variavel 'estado' todos os caracteres do estado ate encontar o final '>'
                     estado.push_back(txtline[j]);
                     j++;
                 }
-                for(it_gt=gra_tab.begin(); it_gt<gra_tab.end(); it_gt++){
-                    if((*it_gt).compara(estado)){
-                        estado = (*it_gt).get_t();
-                        it_gt = gra_tab.end();
-                    } else if((it_gt+1) == gra_tab.end()){
+                
+                for(it_gt=gra_tab.begin(); it_gt<gra_tab.end(); it_gt++){ // loop pela tabela de gramaticas
+                    if((*it_gt).compara(estado)){ // compara se o estado lido é igual ao simbolo do estado da gramatica
+                        estado = (*it_gt).get_t(); // recupera o simbolo do estado do AF 
+                        it_gt = gra_tab.end(); // iterador de controle do loop recebe o simbolo final da tabela de gramaticas para sair do loop
+                    } else if((it_gt+1) == gra_tab.end()){ // verifica se o proximo iterador é o ultimo a ser percorrido pela tabela de gramaticas 
                         auxchar = (*ntchar);
-                        dupla.adicionar(estado, auxchar);
+                        dupla.adicionar(estado, auxchar); // adicionado novo simbolo a tabela de gramaticas 
                         gra_tab.push_back(dupla);
                         estado = auxchar;
-                        nterminais.push_back(estado);
+                        nterminais.push_back(estado); // incluido o estado no vetor de não terminais
                         ntchar[0]++;
                     }
                 }
                 simboloe = estado;
                 estado = "NUL";
 
-                while (txtline[j] != '='){
+                while (txtline[j] != '='){ // loop ate encontrar o '=' que determina o inicio dos estados da gramatica
                     j++;
                 }
 
-                for(i=j+1; i<txtline.length(); i++){
+                for(i=j+1; i<txtline.length(); i++){ // loop para passar por todos os estados da gramatica
+
                     if(txtline[i]>32 && txtline[i]<129){
                         while(txtline[i] !='|' && i < txtline.length()){
                             if(txtline[i]=='<'){
