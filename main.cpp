@@ -321,12 +321,13 @@ int main(){
             }
         }
     } else{
-        cout << "Impossivel abrir arquivo\n";
+        cout << "Impossivel abrir arquivo " << ARQUIVO_R << endl;
         
         return 0;
     }
 
-/*  ####
+/*  
+    ####
         Construção do Autômato Finito
     ####
 */
@@ -336,7 +337,7 @@ int main(){
     vector <Producoes>::iterator it_p;          // Iterador do Vetor <prod>
     AF afnd(nt_size, t_size);                   // Inicialização do AF
 
-// Preencher transições do AF
+    // Preencher transições do AF
     for(it_p=prod.begin(); it_p<prod.end(); it_p++){
         int ef_aux = (*it_p).get_ef();
         string e_aux = (*it_p).get_estado();
@@ -347,7 +348,6 @@ int main(){
             if(e_aux == nterminais[i]){
                 for(j=0; j<t_size; j++){
                     if(t_aux == terminais[j]){
-                        cout << e_aux << " " << t_aux << " " << ef_aux << " " << nt_aux << endl;
                         afnd.adicionar(i, j, ef_aux, nt_aux);
                     }else if(t_aux == "&"){
                         afnd.adicionar(i, j, ef_aux, " ");
@@ -356,11 +356,10 @@ int main(){
             }
         }
     }
-    cout << "AFND preenchida" << endl;
 
-// AFND
+    // AFND
     cout << endl;
-    cout << "Tabela AFND\n";
+    cout << "AFND\n";
     cout << "NT / T\t| ";
     for(i=0; i<t_size; i++)
         cout << terminais[i] << "\t| ";
@@ -397,107 +396,99 @@ senao
     if(txtafd.is_open()){
         if(indet){
             int k, add=0;
-            int afd_lin, afd_col = t_size;      // Linhas e Colunas do AFD
-            AF afd(nt_size, t_size);            // Inicialização do AFD
+            int afd_col = t_size;               // Colunas do AFD
 
-            for(i=0; i<nt_size; i++){           // Primeiro Passo / Indeterminismos Primários
-                if(!afd_estados_usados[i]){
-                    simboloe = nterminais[i];
+            for(i=0; i<nt_size; i++){           // Indeterminismos Primários
+                if(!afd_estados_usados[i]){                     // Se o Estado ainda não apareceu continuar
+                    simboloe = nterminais[i];                   // Estado atual
                     afd_nterminais.push_back(simboloe);
                     for(j=0; j<t_size; j++){
-                        simbolot =  terminais[j];
+                        simbolot =  terminais[j];               // Terminal 
 
                         string str_aux, e_aux;
                         str_aux = afnd.get_cel(i, j);
-
-                        for(k=0; k<str_aux.length(); k++){
+                        for(k=0; k<str_aux.length(); k++){      // Ler os Não-Terminal 
                             if(str_aux[k]=='<'){
                                 k++;
                                 while(str_aux[k] != '>'){
                                     e_aux += str_aux[k];
-                                    for(int z=0; z<nt_size; z++){
-                                        if(nterminais[z][0] == str_aux[k])
-                                            afd_estados_usados[z] = 1;
+                                    if(e_aux.length()>4){
+                                        for(int z=0; z<nt_size; z++){
+                                            if(nterminais[z][0] == str_aux[k])
+                                                afd_estados_usados[z] = 1;
+                                        }
                                     }
                                     k++;
                                 }
                             }
                         }
-                        if(!e_aux.empty()){
+                        if(!e_aux.empty()){                     // Não-Terminais
                             if(e_aux.length()>1)
                                 simbolont = "["+e_aux+"]";
                             else
-                                simbolont = "<"+e_aux+">";
+                                simbolont = e_aux;
                         }else{
                             simbolont = e_aux;
                         }
+                                                                // Adiconar no Vetor <afd_prod>
                         novo_prod.adicionar(simboloe, simbolot, simbolont, afnd.get_ef(i));
                         afd_prod.push_back(novo_prod);
 
-                        if(!simbolont.empty()){
+                        if(!simbolont.empty()){                 // Adicionar ao Vetor <afd_nterminais>
                             for(int z=0; z<nt_size; z++){
                                 add = 1;
-                                if(afd_nterminais[z]==simbolont){
+                                if(afd_nterminais[z]==simbolont || simboloe == simbolont){
                                     add = 0;
                                     z = nt_size;
                                 }
                             }
-                            if(add)
+                            if(add){
                                 afd_nterminais.push_back(simbolont);
+                            }
                         }
                         if(afnd.get_ef(i))
                             afd_estados_usados[i] = 1;
                     }
                 }
             }
-            
-            for(i=0; i<afd_prod.size(); i++)
-                cout << afd_prod[i].get_estado() << " " << afd_prod[i].get_terminal() << " " << afd_prod[i].get_nterminal() << " " << afd_prod[i].get_ef() << endl;
-            for(i=0; i<afd_nterminais.size(); i++)
-                cout << i << afd_nterminais[i] << " ";
-            cout << endl;
 
-            afd_lin = afd_nterminais.size();
-            afd_estados_usados.clear();
-            for(i=0; i<afd_lin; i++)
+            cout << "\n__________\nResolucao de Indeterminismos\n__________\n";            
+            for(i=0; i<afd_prod.size(); i++){                   // Acompanhamento das alterações
+                if(!(i%t_size))
+                    cout << endl;
+                cout << (afd_prod[i].get_ef() ? "Estado: <*" : "Estado: <") <<afd_prod[i].get_estado() << "> Token: (" << afd_prod[i].get_terminal() << ") = <" << afd_prod[i].get_nterminal() << "> " << endl;
+            }
+
+            afd_estados_usados.clear();                         // Limpar Estados usados
+            for(i=0; i<afd_nterminais.size(); i++)
                 afd_estados_usados.push_back(0);
-            for(i=0; i<afd_lin; i++){
-                cout << "afd_lin " << afd_lin << " i" << i << endl;
+            
+            for(i=0; i<afd_nterminais.size(); i++){
                 string str_aux = afd_nterminais[i];
 
-                if(str_aux[0] == '['){
-                    cout << str_aux << ": ";
-                     if(!afd_estados_usados[i]){
-                        simboloe = str_aux;
-                        afd_estados_usados[i] = 1;
+                if(str_aux[0] == '['){                          // Se for Estado novo
+                     if(!afd_estados_usados[i]){                // Estado ainda não usado
+                        simboloe = str_aux;                     // Estado
                         for(j=0; j<afd_col; j++){
-                            simbolot =  terminais[j];
-                            cout << "T: " << simbolot << " |- ";
-                            int ef_aux=0;
+                            simbolot =  terminais[j];           // Terminal
+                            int ef_aux;
                             string str_nt_aux, str_e_aux;
-                            k=1;
-                            cout << str_aux[k] << " ";
-                            while(str_aux[k]!=']'){
-                                cout << "nt_size" << nt_size << " ";
+                            ef_aux = 0;
+                            k = 1;
+                            while(str_aux[k]!=']'){             // Busca Não-Terminais de Estados encontrados
                                 for(int z=0; z<nt_size; z++){
-                                    cout << z;
                                     if(nterminais[z][0] == str_aux[k]){
                                         str_nt_aux += afnd.get_cel(z, j);
                                         if(afnd.get_ef(z))
                                             ef_aux = 1;
-                                        cout << afnd.get_cel(z, j) << "+";
                                     }
                                 }
                                 k++;
-                                cout << " " << str_aux[k] << " ";
-                            }
-                            cout << "$ $ ";
+                            }                                   // Remover separadores dos estados
                             for(int z=0; z<str_nt_aux.length(); z++){
                                 if(str_nt_aux[z]=='<' || str_nt_aux[z]=='['){
-                                    cout << str_nt_aux[z] << " ";
                                     z++;
                                     while(str_nt_aux[z]!='>' && str_nt_aux[z]!=']'){
-                                        cout << str_nt_aux[z] << ".";
                                         int y=1;
                                         for(int x=0; x<str_e_aux.length(); x++){
                                             if(str_e_aux[x] == str_nt_aux[z])
@@ -507,62 +498,64 @@ senao
                                             str_e_aux += str_nt_aux[z];
                                         z++;
                                     }
-                                    cout << "! ";
                                 }
                             }
-                            cout << "_ " << str_e_aux << "_"; 
-                            if(!str_e_aux.empty()){
+                            if(!str_e_aux.empty()){             // Não_terminal
                                 if(str_e_aux.length()>1)
                                     simbolont = "["+str_e_aux+"]";
                                 else
-                                    simbolont = "<"+str_e_aux+">";
+                                    simbolont = str_e_aux;
                             }else{
                                 simbolont = str_e_aux;
                             }
 
+                                                                // Adicionar ao Vetor <afd_nprod>
                             novo_prod.adicionar(simboloe, simbolot, simbolont, ef_aux);
                             afd_prod.push_back(novo_prod);
 
-                            if(!simbolont.empty()){
+                            if(!simbolont.empty()){             // Adicionar ao Vetor <afd_nterminais>
                                 for(int z=0; z<nt_size; z++){
                                     add = 1;
-                                    if(afd_nterminais[z]==simbolont){
+                                    if(afd_nterminais[z]==simbolont || simboloe == simbolont){
                                         add = 0;
+                                        afd_estados_usados[z] = 0;
                                         z = nt_size;
                                     }
                                 }
-                                if(add)
+                                if(add){
                                     afd_nterminais.push_back(simbolont);
+                                    afd_estados_usados.push_back(0);
+                                }
                             }
-                            cout << " -|";
                         }
                         afd_estados_usados[i] = 1;
                     }
                 }
-                afd_lin = afd_nterminais.size();
-                cout << endl;
             }
-            afd_lin = afd_nterminais.size();
 
-             for(i=0; i<afd_prod.size(); i++)
-                cout << afd_prod[i].get_estado() << " " << afd_prod[i].get_terminal() << " " << afd_prod[i].get_nterminal() << " " << afd_prod[i].get_ef() << endl;
-            for(i=0; i<afd_nterminais.size(); i++)
-                cout << i << afd_nterminais[i] << " ";
+            cout << "\n__________\nResolucao de Indeterminismos\n__________\n";
+            for(i=0; i<afd_prod.size(); i++){                   // Acompanhamento das alterações
+                if(!(i%t_size))
+                    cout << endl;
+                cout << (afd_prod[i].get_ef() ? "Estado: <*" : "Estado: <") <<afd_prod[i].get_estado() << "> Token: (" << afd_prod[i].get_terminal() << ") = <" << afd_prod[i].get_nterminal() << "> " << endl;
+            }
             cout << endl;
 
+            AF afd(afd_nterminais.size(), t_size);            // Inicialização do AFD
+
+            // Preencher AFD
             for(it_p=afd_prod.begin(); it_p<afd_prod.end(); it_p++){
                 int ef_aux = (*it_p).get_ef();
                 string e_aux = (*it_p).get_estado();
                 string t_aux = (*it_p).get_terminal();
                 string nt_aux = (*it_p).get_nterminal();
 
-                for(i=0; i<afd_lin; i++){
+                for(i=0; i<afd_nterminais.size(); i++){
                     if(e_aux == afd_nterminais[i]){
                         for(j=0; j<afd_col; j++){
                             if(t_aux == terminais[j]){
-                                cout << e_aux << " " << t_aux << " " << ef_aux << " " << nt_aux << endl;
                                 afd.adicionar(i, j, ef_aux, nt_aux);
-                            }else if(t_aux == "&"){
+                            }else{
                                 afd.adicionar(i, j, ef_aux, " ");
                             }
                         }
@@ -570,22 +563,24 @@ senao
                 }
             }
 
+            // AFD
+            cout << "AFD\n";
             cout << "NT/T\t| ";
             for(i=0; i<t_size; i++)
                 cout << terminais[i] << "\t| ";
             cout << endl;
-            for(i=0; i<nt_size; i++){
+            for(i=0; i<afd_nterminais.size(); i++){
                 cout << ((afd.get_ef(i)) ? "<*" : "<") << afd_nterminais[i] << ">\t| ";
                 for(j=0; j<t_size; j++)
                     cout << afd.get_cel(i, j) << "\t| ";
                 cout << endl;
             }
 
-            txtafd << "δ\t| ";
+            txtafd << "δ\t| ";                                  // Escrita do AFD em um arquivo de texto
             for(i=0; i<t_size; i++)
                 txtafd << terminais[i] << "\t| ";
             txtafd << endl;
-            for(i=0; i<nt_size; i++){
+            for(i=0; i<afd_nterminais.size(); i++){
                 txtafd << ((afd.get_ef(i)) ? "<*" : "<") << afd_nterminais[i] << ">\t| ";
                 for(j=0; j<t_size; j++)
                     txtafd << afd.get_cel(i, j) << "\t| ";
@@ -593,7 +588,21 @@ senao
             }
 
         }else{
-            txtafd << "δ\t| ";
+            // AFD
+            cout << endl;
+            cout << "AFD\n";
+            cout << "NT / T\t| ";
+            for(i=0; i<t_size; i++)
+                cout << terminais[i] << "\t| ";
+            cout << endl;
+            for(i=0; i<nt_size; i++){
+                cout << ((afnd.get_ef(i)) ? "<*" : "<") << nterminais[i] << ">\t| ";
+                for(j=0; j<t_size; j++)
+                    cout << afnd.get_cel(i, j) << "\t| ";
+                cout << endl;
+            }
+
+            txtafd << "δ\t| ";                                  // Escrita do AFD em um arquivo de texto
             for(i=0; i<t_size; i++)
                 txtafd << terminais[i] << "\t| ";
             txtafd << endl;
@@ -606,7 +615,7 @@ senao
         }
         txtafd.close();
     } else
-        cout << "Impossivel abrir arquivo\n";        
+        cout << "Impossivel abrir arquivo " << ARQUIVO_W << endl;        
 
     return 0;
 }
