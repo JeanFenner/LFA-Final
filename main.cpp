@@ -75,11 +75,33 @@ class AF{
         }
 
         void adicionar(int lin, int col, int ef, string novo){
-            table[col][lin].append(novo+" ");
+            if(novo != " ")
+                table[col][lin].append("<"+novo+">");
             if(ef)
                 estado_final[lin] = 1;
 
             return;
+        }
+
+        bool determ(){
+            int i, j, k, det_aux;
+            string str_aux;
+
+            for(i=0; i<size_lin; i++){
+                for(j=0; j<size_col; j++){
+                    str_aux = table[j][i];
+                    int det_aux = 0;
+                    for(k=0; k<str_aux.length(); k++){
+                        if(str_aux[k]=='<' || str_aux[k]=='['){
+                            det_aux++;
+                        }
+                    }
+                    if(det_aux > 1)
+                        return true;
+                }
+            }
+
+            return false;
         }
 
         void print_af(){
@@ -154,11 +176,11 @@ int main(){
     //verifica se existe o arquivo com a relação de tokens e/ou gramaticas regulares
     if(txtfiles.is_open()){
         // inicializa as variaveis 
-        nterminais.push_back("S"); 
-        ntchar[0] = 'A'; 
+        nterminais.push_back("S");
+        ntchar[0] = 'A';
         dupla.adicionar("S", "S");
         gra_tab.push_back(dupla);
-        
+
         while(getline(txtfiles, txtline)){ // loop para ler cada linha do arquivo
             // caso o mesmo iniciar com o char '<' é identiciado como uma gramatica
             if(txtline[0] == '<'){              // GRAMATICAS
@@ -167,7 +189,7 @@ int main(){
                 string estado;
                 string auxchar;
                 j = 1;
-                
+
                 while(txtline[j] != '>'){ // loop para guardar na variavel 'estado' todos os caracteres do estado ate encontar o final '>'
                     estado.push_back(txtline[j]);
                     j++;
@@ -312,9 +334,7 @@ int main(){
     const int t_size = terminais.size();        // Tamanho do Vetor <terminais>
     const int nt_size = nterminais.size();      // Tamanho do Vetor <nterminais>
     vector <Producoes>::iterator it_p;          // Iterador do Vetor <prod>
-
-// Inicialização do AF    
-    AF afnd(nt_size, t_size);
+    AF afnd(nt_size, t_size);                   // Inicialização do AF
 
 // Preencher transições do AF
     for(it_p=prod.begin(); it_p<prod.end(); it_p++){
@@ -346,11 +366,247 @@ int main(){
         cout << terminais[i] << "\t| ";
     cout << endl;
     for(i=0; i<nt_size; i++){
-        cout << ((afnd.get_ef(i)) ? "*" : " ") << nterminais[i] << "\t| ";
+        cout << ((afnd.get_ef(i)) ? "<*" : "<") << nterminais[i] << ">\t| ";
         for(j=0; j<t_size; j++)
             cout << afnd.get_cel(i, j) << "\t| ";
         cout << endl;
     }
+
+/*
+    ####
+        Determinização
+    ####
+se
+entao
+senao
+<S> ::= a<A> | e<A> | i<A> | o<A> | u<A>
+<A> ::= a<A> | e<A> | i<A> | o<A> | u<A> | &
+*/
+
+    vector <int> afd_estados_usados;            // Vetor de Estados da AFND usados na AFD
+    vector <string> afd_nterminais;             // Vetor de Estados do AFD
+    vector <Producoes> afd_prod;                // Vetor das produções de cada Estado do AFD
+    ofstream txtafd(ARQUIVO_W);                 // Arquivo escrita AFD
+
+    for(i=0; i<nt_size; i++)
+        afd_estados_usados.push_back(0);
+
+    bool indet = (afnd.determ());
+    cout << "Automato Finito " << (indet ? "Indeterministico" : "Deterministico") << endl;
+
+    if(txtafd.is_open()){
+        if(indet){
+            int k, add=0;
+            int afd_lin, afd_col = t_size;      // Linhas e Colunas do AFD
+            AF afd(nt_size, t_size);            // Inicialização do AFD
+
+            for(i=0; i<nt_size; i++){           // Primeiro Passo / Indeterminismos Primários
+                if(!afd_estados_usados[i]){
+                    simboloe = nterminais[i];
+                    afd_nterminais.push_back(simboloe);
+                    for(j=0; j<t_size; j++){
+                        simbolot =  terminais[j];
+
+                        string str_aux, e_aux;
+                        str_aux = afnd.get_cel(i, j);
+
+                        for(k=0; k<str_aux.length(); k++){
+                            if(str_aux[k]=='<'){
+                                k++;
+                                while(str_aux[k] != '>'){
+                                    e_aux += str_aux[k];
+                                    for(int z=0; z<nt_size; z++){
+                                        if(nterminais[z][0] == str_aux[k])
+                                            afd_estados_usados[z] = 1;
+                                    }
+                                    k++;
+                                }
+                            }
+                        }
+                        if(!e_aux.empty()){
+                            if(e_aux.length()>1)
+                                simbolont = "["+e_aux+"]";
+                            else
+                                simbolont = "<"+e_aux+">";
+                        }else{
+                            simbolont = e_aux;
+                        }
+                        novo_prod.adicionar(simboloe, simbolot, simbolont, afnd.get_ef(i));
+                        afd_prod.push_back(novo_prod);
+
+                        if(!simbolont.empty()){
+                            for(int z=0; z<nt_size; z++){
+                                add = 1;
+                                if(afd_nterminais[z]==simbolont){
+                                    add = 0;
+                                    z = nt_size;
+                                }
+                            }
+                            if(add)
+                                afd_nterminais.push_back(simbolont);
+                        }
+                        if(afnd.get_ef(i))
+                            afd_estados_usados[i] = 1;
+                    }
+                }
+            }
+            
+            for(i=0; i<afd_prod.size(); i++)
+                cout << afd_prod[i].get_estado() << " " << afd_prod[i].get_terminal() << " " << afd_prod[i].get_nterminal() << " " << afd_prod[i].get_ef() << endl;
+            for(i=0; i<afd_nterminais.size(); i++)
+                cout << i << afd_nterminais[i] << " ";
+            cout << endl;
+
+            afd_lin = afd_nterminais.size();
+            afd_estados_usados.clear();
+            for(i=0; i<afd_lin; i++)
+                afd_estados_usados.push_back(0);
+            for(i=0; i<afd_lin; i++){
+                cout << "afd_lin " << afd_lin << " i" << i << endl;
+                string str_aux = afd_nterminais[i];
+
+                if(str_aux[0] == '['){
+                    cout << str_aux << ": ";
+                     if(!afd_estados_usados[i]){
+                        simboloe = str_aux;
+                        afd_estados_usados[i] = 1;
+                        for(j=0; j<afd_col; j++){
+                            simbolot =  terminais[j];
+                            cout << "T: " << simbolot << " |- ";
+                            int ef_aux=0;
+                            string str_nt_aux, str_e_aux;
+                            k=1;
+                            cout << str_aux[k] << " ";
+                            while(str_aux[k]!=']'){
+                                cout << "nt_size" << nt_size << " ";
+                                for(int z=0; z<nt_size; z++){
+                                    cout << z;
+                                    if(nterminais[z][0] == str_aux[k]){
+                                        str_nt_aux += afnd.get_cel(z, j);
+                                        if(afnd.get_ef(z))
+                                            ef_aux = 1;
+                                        cout << afnd.get_cel(z, j) << "+";
+                                    }
+                                }
+                                k++;
+                                cout << " " << str_aux[k] << " ";
+                            }
+                            cout << "$ $ ";
+                            for(int z=0; z<str_nt_aux.length(); z++){
+                                if(str_nt_aux[z]=='<' || str_nt_aux[z]=='['){
+                                    cout << str_nt_aux[z] << " ";
+                                    z++;
+                                    while(str_nt_aux[z]!='>' && str_nt_aux[z]!=']'){
+                                        cout << str_nt_aux[z] << ".";
+                                        int y=1;
+                                        for(int x=0; x<str_e_aux.length(); x++){
+                                            if(str_e_aux[x] == str_nt_aux[z])
+                                                y=0;
+                                        }
+                                        if(y)
+                                            str_e_aux += str_nt_aux[z];
+                                        z++;
+                                    }
+                                    cout << "! ";
+                                }
+                            }
+                            cout << "_ " << str_e_aux << "_"; 
+                            if(!str_e_aux.empty()){
+                                if(str_e_aux.length()>1)
+                                    simbolont = "["+str_e_aux+"]";
+                                else
+                                    simbolont = "<"+str_e_aux+">";
+                            }else{
+                                simbolont = str_e_aux;
+                            }
+
+                            novo_prod.adicionar(simboloe, simbolot, simbolont, ef_aux);
+                            afd_prod.push_back(novo_prod);
+
+                            if(!simbolont.empty()){
+                                for(int z=0; z<nt_size; z++){
+                                    add = 1;
+                                    if(afd_nterminais[z]==simbolont){
+                                        add = 0;
+                                        z = nt_size;
+                                    }
+                                }
+                                if(add)
+                                    afd_nterminais.push_back(simbolont);
+                            }
+                            cout << " -|";
+                        }
+                        afd_estados_usados[i] = 1;
+                    }
+                }
+                afd_lin = afd_nterminais.size();
+                cout << endl;
+            }
+            afd_lin = afd_nterminais.size();
+
+             for(i=0; i<afd_prod.size(); i++)
+                cout << afd_prod[i].get_estado() << " " << afd_prod[i].get_terminal() << " " << afd_prod[i].get_nterminal() << " " << afd_prod[i].get_ef() << endl;
+            for(i=0; i<afd_nterminais.size(); i++)
+                cout << i << afd_nterminais[i] << " ";
+            cout << endl;
+
+            for(it_p=afd_prod.begin(); it_p<afd_prod.end(); it_p++){
+                int ef_aux = (*it_p).get_ef();
+                string e_aux = (*it_p).get_estado();
+                string t_aux = (*it_p).get_terminal();
+                string nt_aux = (*it_p).get_nterminal();
+
+                for(i=0; i<afd_lin; i++){
+                    if(e_aux == afd_nterminais[i]){
+                        for(j=0; j<afd_col; j++){
+                            if(t_aux == terminais[j]){
+                                cout << e_aux << " " << t_aux << " " << ef_aux << " " << nt_aux << endl;
+                                afd.adicionar(i, j, ef_aux, nt_aux);
+                            }else if(t_aux == "&"){
+                                afd.adicionar(i, j, ef_aux, " ");
+                            }
+                        }
+                    }
+                }
+            }
+
+            cout << "NT/T\t| ";
+            for(i=0; i<t_size; i++)
+                cout << terminais[i] << "\t| ";
+            cout << endl;
+            for(i=0; i<nt_size; i++){
+                cout << ((afd.get_ef(i)) ? "<*" : "<") << afd_nterminais[i] << ">\t| ";
+                for(j=0; j<t_size; j++)
+                    cout << afd.get_cel(i, j) << "\t| ";
+                cout << endl;
+            }
+
+            txtafd << "δ\t| ";
+            for(i=0; i<t_size; i++)
+                txtafd << terminais[i] << "\t| ";
+            txtafd << endl;
+            for(i=0; i<nt_size; i++){
+                txtafd << ((afd.get_ef(i)) ? "<*" : "<") << afd_nterminais[i] << ">\t| ";
+                for(j=0; j<t_size; j++)
+                    txtafd << afd.get_cel(i, j) << "\t| ";
+                txtafd << endl;
+            }
+
+        }else{
+            txtafd << "δ\t| ";
+            for(i=0; i<t_size; i++)
+                txtafd << terminais[i] << "\t| ";
+            txtafd << endl;
+            for(i=0; i<nt_size; i++){
+                txtafd << ((afnd.get_ef(i)) ? "<*" : "<") << nterminais[i] << ">\t| ";
+                for(j=0; j<t_size; j++)
+                    txtafd << afnd.get_cel(i, j) << "\t| ";
+                txtafd << endl;
+            }
+        }
+        txtafd.close();
+    } else
+        cout << "Impossivel abrir arquivo\n";        
 
     return 0;
 }
