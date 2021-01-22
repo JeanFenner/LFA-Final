@@ -12,6 +12,7 @@ Construção de uma aplicação para construção, determinização e minimizaç
 #include <fstream>
 #include <string>
 #include <vector>
+
 #define ARQUIVO_R "text.txt"                // Arquivo que será lido
 #define ARQUIVO_W "afd.txt"                 // Arquivo em que será escrito
 #define EPS "&"                             // Epsilon
@@ -92,7 +93,7 @@ class AF{
                     str_aux = table[j][i];
                     int det_aux = 0;
                     for(k=0; k<str_aux.length(); k++){
-                        if(str_aux[k]=='<' || str_aux[k]=='['){
+                        if(str_aux[k]=='<'){
                             det_aux++;
                         }
                     }
@@ -182,7 +183,7 @@ int main(){
         gra_tab.push_back(dupla);
 
         while(getline(txtfiles, txtline)){ // loop para ler cada linha do arquivo
-            // caso o mesmo iniciar com o char '<' é identiciado como uma gramatica
+            // caso a mesma iniciar com o char '<' é identiciado como uma gramatica
             if(txtline[0] == '<'){              // GRAMATICAS
                 int ef = 0;
                 char txtchar;
@@ -215,7 +216,7 @@ int main(){
                     j++;
                 }
 
-                for(i=j+1; i<txtline.length(); i++){ // loop para passar por todos os estados da gramatica
+                for(i=j+1; i<txtline.length(); i++){ // loop para passar por todos as produções da gramatica
 
                     if(txtline[i]>32 && txtline[i]<129){
                         while(txtline[i] !='|' && i < txtline.length()){
@@ -375,20 +376,12 @@ int main(){
     ####
         Determinização
     ####
-se
-entao
-senao
-<S> ::= a<A> | e<A> | i<A> | o<A> | u<A>
-<A> ::= a<A> | e<A> | i<A> | o<A> | u<A> | &
 */
 
     vector <int> afd_estados_usados;            // Vetor de Estados da AFND usados na AFD
     vector <string> afd_nterminais;             // Vetor de Estados do AFD
     vector <Producoes> afd_prod;                // Vetor das produções de cada Estado do AFD
     ofstream txtafd(ARQUIVO_W);                 // Arquivo escrita AFD
-
-    for(i=0; i<nt_size; i++)
-        afd_estados_usados.push_back(0);
 
     bool indet = (afnd.determ());
     cout << "Automato Finito " << (indet ? "Indeterministico" : "Deterministico") << endl;
@@ -397,6 +390,9 @@ senao
         if(indet){
             int k, add=0;
             int afd_col = t_size;               // Colunas do AFD
+
+            for(i=0; i<nt_size; i++)
+                afd_estados_usados.push_back(0);
 
             for(i=0; i<nt_size; i++){           // Indeterminismos Primários
                 if(!afd_estados_usados[i]){                     // Se o Estado ainda não apareceu continuar
